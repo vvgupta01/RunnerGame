@@ -1,20 +1,29 @@
 package com.example.runner.objects;
 
-import com.example.runner.main.GameSurface;
+import com.example.runner.main.GameView;
+import com.example.runner.main.Map;
 import com.example.runner.main.Resources;
 
 public class Tile extends GameObject {
     public static final int HEIGHT = 16;
-    private static final float OFF_X = 2 * GameSurface.SCALE_X,
-            OFF_Y = 2 * GameSurface.SCALE_Y;
+    public static final int GROUND_WIDTH = 96, GROUND_HEIGHT = 32;
+    public static final int MAX_GROUND = Map.WIDTH / GROUND_WIDTH,
+            MAX_TILES = 2;
+    public static final int GROUND_Y = Map.HEIGHT - GROUND_HEIGHT;
+    private static final float OFF_X = 2 * GameView.SCALE_X,
+            OFF_Y = 2 * GameView.SCALE_Y;
+    private boolean ground;
 
     public Tile(int id, float x, float y) {
        super(Resources.TILES[id], (id + 1) * 32, HEIGHT, x, y);
     }
 
-    public void shift(float shift) { x -= shift; }
+    public Tile(float x) {
+        super(Resources.TILES[3], GROUND_WIDTH, GROUND_HEIGHT, x, GROUND_Y);
+        ground = true;
+    }
 
-    public boolean isOffScreen() { return (x + width <= 0); }
+    public void shift(float shift) { x -= shift; }
 
     @Override
     public float getLeft() {
@@ -35,4 +44,6 @@ public class Tile extends GameObject {
     public float getBottom() {
         return super.getBottom() - OFF_Y;
     }
+
+    public boolean isGround() { return ground; }
 }

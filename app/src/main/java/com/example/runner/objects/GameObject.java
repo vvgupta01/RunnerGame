@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.RectF;
 
-import com.example.runner.main.GameSurface;
+import com.example.runner.main.GameView;
 
 public abstract class GameObject {
     private Bitmap image;
@@ -13,10 +13,10 @@ public abstract class GameObject {
 
     GameObject(Bitmap image, int width, int height, float x, float y) {
         this.image = image;
-        this.width = width * GameSurface.SCALE_X;
-        this.height = height * GameSurface.SCALE_Y;
-        this.x = x;
-        this.y = y;
+        this.width = width * GameView.SCALE_X;
+        this.height = height * GameView.SCALE_Y;
+        this.x = x * GameView.SCALE_X;
+        this.y = y * GameView.SCALE_Y;
     }
 
     public void update() {
@@ -25,10 +25,6 @@ public abstract class GameObject {
 
     public void draw(Canvas canvas) {
         canvas.drawBitmap(image, x, y, null);
-    }
-
-    public RectF getBounds() {
-        return new RectF(getLeft(), getTop(), getRight(), getBottom());
     }
 
     public float getLeft() {
@@ -45,13 +41,5 @@ public abstract class GameObject {
 
     public float getBottom() {
         return y + height;
-    }
-
-    public float getWidth() {
-        return width;
-    }
-
-    public float getHeight() {
-        return height;
     }
 }

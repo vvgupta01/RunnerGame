@@ -5,10 +5,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
-    public static int WIDTH, HEIGHT, DENSITY;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,12 +23,6 @@ public class MainActivity extends AppCompatActivity {
 
         );
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
-        DisplayMetrics metrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
-        WIDTH = metrics.widthPixels;
-        HEIGHT = metrics.heightPixels;
-        DENSITY = metrics.densityDpi;
-        setContentView(new GameSurface(this));
+        setContentView(new GameView(this));
     }
 }

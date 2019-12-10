@@ -1,21 +1,18 @@
 package com.example.runner.objects;
 
-
-import android.util.Log;
-
-import com.example.runner.main.GameSurface;
+import com.example.runner.main.GameView;
 import com.example.runner.main.GameThread;
+import com.example.runner.states.GameState;
 
 import java.util.ArrayList;
 
 class PlayerEngine {
     private static final int LEFT_COLLISION = 1, BOT_COLLISION = 2, TOP_COLLISION = 3;
-    private static final double VEL_Y0 = 500, GRAVITY = 500;
+    private static final double VEL_Y0 = 500, GRAVITY = 800;
     private static final double ERROR = VEL_Y0 / GameThread.FPS;
 
     private Player player;
     private ArrayList<Tile> tiles;
-    private ArrayList<Ground> grounds;
 
     private double velY;
     private float shift;
@@ -23,37 +20,30 @@ class PlayerEngine {
 
     PlayerEngine(Player player) {
         this.player = player;
-        tiles = GameSurface.getMap().getTiles();
-        grounds = GameSurface.getMap().getGrounds();
+        tiles = GameState.getMap().getAllTiles();
+    }
+
+    void update() {
+        tiles = GameState.getMap().getAllTiles();
     }
 
     void checkRun() {
-        if (player.x < Player.CENTER_X) {
-            shift = GameSurface.getMap().getSpeed() / 5;
+        if (player.x < Player.CENTER_X * GameView.SCALE_X) {
+            shift = GameState.getMap().getSpeed() / 3;
         } else {
             shift = 0;
         }
 
-        if (player.getBounds().bottom >= Ground.Y) {
-            for (Ground ground : grounds) {
-                if (groundCollision(ground)) {
-                    return;
-                }
-            }
-        } else {
-            for (Tile tile : tiles) {
-                if (tileCollision(tile) == BOT_COLLISION) {
-                    return;
-                }
+        for (Tile tile : tiles) {
+            if (tileCollision(tile) == BOT_COLLISION) {
+                return;
             }
         }
         player.drop(false);
     }
 
     void checkGrab() {
-        if (player.getState() == Player.GRAB_STATE) {
-            shift = -GameSurface.getMap().getSpeed();
-        }
+        shift = -GameState.getMap().getSpeed();
     }
 
     void jump() {
@@ -73,11 +63,11 @@ class PlayerEngine {
     }
 
     void updateJump() {
-        player.y -= velY / GameThread.FPS;
-        velY -= GRAVITY / GameThread.FPS;
+        player.y -= velY / GameThread.FPS * GameThread.DELTA;
+        velY -= GRAVITY / GameThread.FPS * GameThread.DELTA;
 
         if (verticalDrop || (ledgeJump && velY > 0)) {
-            shift = -GameSurface.getMap().getSpeed();
+            shift = -GameState.getMap().getSpeed();
         } else {
             shift = 0;
         }
@@ -97,21 +87,16 @@ class PlayerEngine {
             }
         }
 
-        for (Ground ground : grounds) {
-            if (groundCollision(ground)) {
-                land();
-                break;
-            }
-        }
-
         if (!ledgeJump) {
             for (Tile tile : tiles) {
                 float diffX = player.getRight() - tile.getLeft();
                 float diffY = player.getTop() - tile.getTop();
-                if (diffX >= 0 && diffX <= ERROR
-                        && diffY >= -7 * GameSurface.SCALE_Y && diffY <= tile.height) {
-                    land();
-                    player.grab();
+                if (diffX >= 0 && diffX <= ERROR && diffY >= -7 * GameView.SCALE_Y) {
+                    if ((tile.isGround() && diffY <= tile.height)
+                            || (!tile.isGround() && diffY <= 0)) {
+                        land();
+                        player.grab();
+                    }
                 }
             }
         }
@@ -177,21 +162,16 @@ class PlayerEngine {
         return false;
     }
 
-    private boolean groundCollision(Ground ground) {
-        float playerBottom = player.getBottom();
-        float groundTop = ground.getTop();
-        if (playerBottom >= groundTop) {
-            player.y -= (playerBottom - groundTop);
-            return true;
-        }
-        return false;
-    }
-
     int getFrame() {
         if (velY >= 0) {
             return 0;
         }
         return 1;
+    }
+
+    boolean canJump() {
+        return ((player.getJumps() < 2 && velY < 0)
+                || player.getState() != Player.JUMP_STATE);
     }
 
     float getShift() {

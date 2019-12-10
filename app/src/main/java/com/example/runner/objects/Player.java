@@ -2,29 +2,27 @@ package com.example.runner.objects;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.util.Log;
 
 import com.example.runner.main.Animation;
-import com.example.runner.main.GameSurface;
+import com.example.runner.main.GameView;
+import com.example.runner.main.GameThread;
+import com.example.runner.main.Map;
 import com.example.runner.main.Resources;
 
 
 public class Player extends GameObject {
     public static final int WIDTH = 22, HEIGHT = 34;
     public static final int IDLE_STATE = 0, RUN_STATE = 1, JUMP_STATE = 2, GRAB_STATE = 3;
-    static final float CENTER_X = 181 * GameSurface.SCALE_X,
-        CENTER_Y = 152 * GameSurface.SCALE_Y;
-
+    public static final int CENTER_X = (Map.WIDTH - WIDTH) / 2,
+            CENTER_Y = Tile.GROUND_Y - HEIGHT + 2;
 
     private PlayerEngine ENGINE;
     private final Bitmap[] IDLE_FRAMES, RUN_FRAMES, JUMP_FRAMES, GRAB_FRAMES;
     private final Animation IDLE, RUN, GRAB;
 
     private int state;
-    private int jumpFrame;
+    private int jumps, jumpFrame;
 
     public Player() {
         super(null, WIDTH, HEIGHT, CENTER_X, CENTER_Y);
@@ -43,7 +41,9 @@ public class Player extends GameObject {
 
     @Override
     public void update() {
-        x += ENGINE.getShift();
+        ENGINE.update();
+
+        x += ENGINE.getShift() * GameThread.DELTA;
         if (state == IDLE_STATE) {
             IDLE.update();
         } else if (state == RUN_STATE) {
@@ -52,7 +52,7 @@ public class Player extends GameObject {
         } else if (state == JUMP_STATE) {
             ENGINE.updateJump();
             if (ENGINE.isLanded() && state != GRAB_STATE) {
-                state = RUN_STATE;
+                run();
             }
             jumpFrame = ENGINE.getFrame();
         } else if (state == GRAB_STATE) {
@@ -78,20 +78,25 @@ public class Player extends GameObject {
 
     public void run() {
         state = RUN_STATE;
+        jumps = 0;
     }
 
     public void jump() {
-        if (state == GRAB_STATE) {
-            ENGINE.ledge_jump();
-        } else {
-            ENGINE.jump();
+        if (ENGINE.canJump()) {
+            if (state == GRAB_STATE) {
+                ENGINE.ledge_jump();
+            } else {
+                ENGINE.jump();
+            }
+            jumps++;
+            state = JUMP_STATE;
         }
-        state = JUMP_STATE;
     }
 
     void drop(boolean verticalDrop) {
         state = JUMP_STATE;
         ENGINE.drop(verticalDrop);
+        jumps++;
     }
 
     void grab() {
@@ -101,5 +106,9 @@ public class Player extends GameObject {
 
     public int getState() {
         return state;
+    }
+
+    public int getJumps() {
+        return jumps;
     }
 }
