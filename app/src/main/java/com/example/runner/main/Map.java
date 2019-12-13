@@ -20,7 +20,7 @@ public class Map {
     private ArrayList<Tile> grounds = new ArrayList<>();
     private ArrayList<Tile> toRemove = new ArrayList<>();
 
-    public Map() {
+    Map() {
         for (int i = 0; i < LAYERS.length; i++) {
             speeds[i] = (i + 1) * GameView.WIDTH / 500f;
         }
@@ -30,7 +30,7 @@ public class Map {
         }
     }
 
-    public void update() {
+    void update() {
         for (int i = 0; i < LAYERS.length; i++) {
             shifts[i] += speeds[i] * GameThread.DELTA;
             shifts[i] %= GameView.WIDTH;
@@ -42,7 +42,7 @@ public class Map {
         updateGround();
     }
 
-    public void draw(Canvas canvas) {
+    void draw(Canvas canvas) {
         for (int i = 0; i < LAYERS.length; i++) {
             Bitmap layer = LAYERS[i];
             canvas.drawBitmap(layer, -shifts[i], 0, null);

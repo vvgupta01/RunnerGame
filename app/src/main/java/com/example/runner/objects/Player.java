@@ -42,8 +42,6 @@ public class Player extends GameObject {
     @Override
     public void update() {
         ENGINE.update();
-
-        x += ENGINE.getShift() * GameThread.DELTA;
         if (state == IDLE_STATE) {
             IDLE.update();
         } else if (state == RUN_STATE) {
@@ -56,7 +54,6 @@ public class Player extends GameObject {
             }
             jumpFrame = ENGINE.getFrame();
         } else if (state == GRAB_STATE) {
-            ENGINE.checkGrab();
             if (GRAB.isActive()) {
                 GRAB.update();
             }

@@ -26,23 +26,23 @@ public class Tile extends GameObject {
     public void shift(float shift) { x -= shift; }
 
     @Override
-    public float getLeft() {
-        return x + OFF_X;
+    public int getLeft() {
+        return (int) (x + OFF_X);
     }
 
     @Override
-    public float getRight() {
-        return super.getRight() - OFF_X;
+    public int getRight() {
+        return (int) (super.getRight() - OFF_X);
     }
 
     @Override
-    public float getTop() {
-        return y + OFF_Y;
+    public int getTop() {
+        return (int) (y + OFF_Y);
     }
 
     @Override
-    public float getBottom() {
-        return super.getBottom() - OFF_Y;
+    public int getBottom() {
+        return (int) (super.getBottom() - OFF_Y);
     }
 
     public boolean isGround() { return ground; }

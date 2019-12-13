@@ -3,6 +3,7 @@ package com.example.runner.main;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 public class SplashActivity extends AppCompatActivity {

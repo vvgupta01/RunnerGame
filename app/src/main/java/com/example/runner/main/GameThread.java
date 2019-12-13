@@ -14,7 +14,6 @@ public class GameThread extends Thread {
     private final SurfaceHolder holder;
 
     GameThread(GameView surface, SurfaceHolder holder) {
-        super();
         this.surface = surface;
         this.holder = holder;
     }
@@ -35,34 +34,34 @@ public class GameThread extends Thread {
                     surface.draw(canvas);
                 }
                 endTime = System.currentTimeMillis();
-                time = endTime - startTime;
-
-                delay = (int) (TPF - time);
-                int skippedFrames = 0;
-                while (delay < 0 && skippedFrames < 5) {
-                    surface.update();
-                    delay += TPF;
-                    skippedFrames++;
-                }
-
-                try {
-                    sleep(delay);
-                } catch (InterruptedException e) {
-                    //
-                }
-
-                timer += System.currentTimeMillis() - startTime;
-                frames++;
-                if (timer >= 1000) {
-                    DELTA = Math.max(30f / frames, 1);
-                    Log.i("FPS", frames + "");
-                    frames = 0;
-                    timer = 0;
-                }
             } finally {
                 if (canvas != null) {
                     holder.unlockCanvasAndPost(canvas);
                 }
+            }
+
+            time = endTime - startTime;
+            delay = (int) (TPF - time);
+            int skippedFrames = 0;
+            while (delay < 0 && skippedFrames < 5) {
+                surface.update();
+                delay += TPF;
+                skippedFrames++;
+            }
+
+            try {
+                sleep(delay);
+            } catch (InterruptedException e) {
+                //
+            }
+
+            timer += System.currentTimeMillis() - startTime;
+            frames++;
+            if (timer >= 1000) {
+                Log.i("FPS", frames + "");
+                DELTA = Math.max(30f / frames, 1);
+                frames = 0;
+                timer = 0;
             }
         }
     }
