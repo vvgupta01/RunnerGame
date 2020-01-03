@@ -7,7 +7,7 @@ import android.graphics.RectF;
 import com.example.runner.main.GameView;
 
 public abstract class GameObject {
-    Bitmap image;
+    private Bitmap image;
     float width, height;
     float x, y;
 
@@ -27,19 +27,19 @@ public abstract class GameObject {
         canvas.drawBitmap(image, x, y, null);
     }
 
-    public int getLeft() {
-        return (int) x;
+    public float getLeft() {
+        return x;
     }
 
-    public int getTop() {
-        return (int) y;
+    public float getRight() {
+        return x + width;
     }
 
-    public int getRight() {
-        return (int) (x + width);
+    public float getTop() {
+        return y;
     }
 
-    public int getBottom() {
-        return (int) (y + height);
+    public float getBottom() {
+        return y + height;
     }
 }

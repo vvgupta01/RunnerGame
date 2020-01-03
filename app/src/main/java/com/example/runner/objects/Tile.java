@@ -1,5 +1,8 @@
 package com.example.runner.objects;
 
+import android.util.Log;
+
+import com.example.runner.main.GameThread;
 import com.example.runner.main.GameView;
 import com.example.runner.main.Map;
 import com.example.runner.main.Resources;
@@ -7,14 +10,17 @@ import com.example.runner.main.Resources;
 public class Tile extends GameObject {
     public static final int HEIGHT = 16;
     public static final int GROUND_WIDTH = 96, GROUND_HEIGHT = 32;
-    public static final int MAX_GROUND = Map.WIDTH / GROUND_WIDTH,
-            MAX_TILES = 2;
+
+    public static final int MAX_GROUND = Map.WIDTH / GROUND_WIDTH;
     public static final int GROUND_Y = Map.HEIGHT - GROUND_HEIGHT;
     private static final float OFF_X = 2 * GameView.SCALE_X,
             OFF_Y = 2 * GameView.SCALE_Y;
+
+    private float timer, ttl;
+    private float velX, velY;
     private boolean ground;
 
-    public Tile(int id, float x, float y) {
+    private Tile(int id, float x, float y) {
        super(Resources.TILES[id], (id + 1) * 32, HEIGHT, x, y);
     }
 
@@ -23,27 +29,59 @@ public class Tile extends GameObject {
         ground = true;
     }
 
-    public void shift(float shift) { x -= shift; }
+    public static Tile generateTile(int index) {
+        float anchorX = Map.WIDTH + index * Map.WIDTH / Map.MAX_TILES;
+        int marginX = (int) (Math.random() * Map.WIDTH / (2 * Map.MAX_TILES));
 
-    @Override
-    public int getLeft() {
-        return (int) (x + OFF_X);
+        float x = anchorX + marginX;
+        float y = Tile.GROUND_Y - ((int) (Math.random() * 2) + 1)
+                * (Player.HEIGHT + Tile.HEIGHT);
+        int id = (int) (Math.random() * 3);
+        return new Tile(id, x, y);
     }
 
     @Override
-    public int getRight() {
-        return (int) (super.getRight() - OFF_X);
+    public void update() {
+        if (!isFalling()) {
+            timer += GameThread.TPF;
+        }
+
+        if (timer >= ttl) {
+            velY -= Map.GRAVITY;
+            y -= velY;
+        }
+    }
+
+    public void shift(float velX) {
+        if (!isFalling() && this.velX != velX) {
+            this.velX = velX;
+            ttl = x / velX / GameThread.FPS * 1000;
+//            Log.i("TTL", ttl+"");
+        }
+        x -= velX;
     }
 
     @Override
-    public int getTop() {
-        return (int) (y + OFF_Y);
+    public float getLeft() {
+        return x + OFF_X;
     }
 
     @Override
-    public int getBottom() {
-        return (int) (super.getBottom() - OFF_Y);
+    public float getRight() {
+        return super.getRight() - OFF_X;
+    }
+
+    @Override
+    public float getTop() {
+        return y + OFF_Y;
+    }
+
+    @Override
+    public float getBottom() {
+        return super.getBottom() - OFF_Y;
     }
 
     public boolean isGround() { return ground; }
+
+    public boolean isFalling() { return (velY < 0); }
 }

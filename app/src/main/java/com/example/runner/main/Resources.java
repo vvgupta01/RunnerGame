@@ -12,12 +12,14 @@ import com.example.runner.objects.Button;
 
 public class Resources {
     public static Bitmap[] PLAYER_IDLE, PLAYER_RUN, PLAYER_JUMP, PLAYER_GRAB;
-    public static Bitmap[] BACKGROUNDS, TILES;
+    public static Bitmap[] BACKGROUNDS, TILES, ITEMS;
     public static Bitmap[] ICONS;
 
     private static Typeface FONT;
-    private static Paint BASE_PAINT;
     private Context context;
+
+    static Paint FILL_PAINT, STROKE_PAINT,
+            FILL_CENTER_PAINT, STROKE_CENTER_PAINT;
 
     Resources(Context context) {
         this.context = context;
@@ -25,6 +27,12 @@ public class Resources {
     }
 
     private void load() {
+        loadImages();;
+        loadFont();
+        loadPaints();
+    }
+
+    private void loadImages() {
         PLAYER_IDLE = loadSheet(R.drawable.player_idle, 21, 35);
         PLAYER_RUN = loadSheet(R.drawable.player_run, 23, 34);
         PLAYER_JUMP = loadSheet(R.drawable.player_jump, 22, 37);
@@ -33,29 +41,30 @@ public class Resources {
         BACKGROUNDS = loadSheet(R.drawable.background, Map.WIDTH, Map.HEIGHT);
         TILES = loadSheet(R.drawable.tiles, 96, 32);
         ICONS = loadSheet(R.drawable.icons, Button.WIDTH, Button.HEIGHT);
-
-        FONT = loadFont();
-        BASE_PAINT = loadPaint();
+        ITEMS = loadSheet(R.drawable.items, 14, 15);
     }
 
-    public static Paint getPaint(int size, boolean center) {
-        Paint paint = new Paint(BASE_PAINT);
-        paint.setTextSize(size * GameView.SCALE_X);
-        if (center) {
-            paint.setTextAlign(Paint.Align.CENTER);
-        }
-        return paint;
+    private void loadFont() {
+        FONT = Typeface.createFromAsset(context.getAssets(), "font/font.ttf");
     }
 
-    private static Paint loadPaint() {
-        Paint paint = new Paint();
-        paint.setTypeface(FONT);
-        paint.setColor(Color.WHITE);
-        return paint;
-    }
+    private void loadPaints() {
+        Paint BASE_PAINT = new Paint();
+        BASE_PAINT.setTypeface(FONT);
+        BASE_PAINT.setTextSize(10 * GameView.SCALE_X);
 
-    private Typeface loadFont() {
-        return Typeface.createFromAsset(context.getAssets(), "font/font.ttf");
+        FILL_PAINT = new Paint(BASE_PAINT);
+        FILL_PAINT.setColor(Color.WHITE);
+
+        FILL_CENTER_PAINT = new Paint(FILL_PAINT);
+        FILL_CENTER_PAINT.setTextAlign(Paint.Align.CENTER);
+
+        STROKE_PAINT = new Paint(BASE_PAINT);
+        STROKE_PAINT.setColor(Color.BLACK);
+        STROKE_PAINT.setStyle(Paint.Style.STROKE);
+
+        STROKE_CENTER_PAINT = new Paint(STROKE_PAINT);
+        STROKE_CENTER_PAINT.setTextAlign(Paint.Align.CENTER);
     }
 
     private Bitmap[] loadSheet(int res, int width, int height) {

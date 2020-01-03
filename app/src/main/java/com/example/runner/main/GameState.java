@@ -1,39 +1,71 @@
 package com.example.runner.main;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 
 import com.example.runner.objects.Button;
 import com.example.runner.objects.Player;
+import com.example.runner.objects.Berry;
 
 public class GameState {
-    public static final int GAME_STATE = 0, END_STATE = 1;
+    private static final int GAME_STATE = 0, END_STATE = 1;
     private final Button STATE_BUTTON;
     private final Button HELP_BUTTON;
 
-    private static Map map;
-    private static Player player;
+    private SharedPreferences prefs;
+    private Map map;
+    private Player player;
 
     private int state;
-    private double time;
+    private int berries;
+    private float highScore, score;
+    private boolean paused;
 
-    GameState() {
+    private float textShift, textVel;
+
+    GameState(Context context) {
         STATE_BUTTON = new Button(Map.WIDTH - Button.WIDTH - 10, 10);
         HELP_BUTTON = new Button(Map.WIDTH - 2 * (Button.WIDTH + 10), 10);
+
+        prefs = context.getSharedPreferences("HIGH_SCORE", Context.MODE_PRIVATE);
+        highScore = prefs.getInt("HIGH_SCORE", 0);
         reset();
     }
 
-    void update() {
-        if (player.getState() != Player.IDLE_STATE) {
-            time += GameThread.TPF;
-            map.update();
+    private void togglePause() {
+        paused = !paused;
+        if (paused) {
+            STATE_BUTTON.setState(Button.PLAY);
+            AudioPlayer.pause();
+        } else {
+            STATE_BUTTON.setState(Button.PAUSE);
+            AudioPlayer.start();
         }
-        player.update();
+    }
 
-        if (player.getRight() < -GameView.WIDTH / 10f
-                || player.getTop() > 6 * GameView.HEIGHT / 5f) {
-            state = END_STATE;
-            STATE_BUTTON.setState(Button.RESET);
-            MainActivity.save(time);
+    void pause() {
+        if (!paused && state != END_STATE) {
+            togglePause();
+        }
+    }
+
+    void update() {
+        if (state != END_STATE && !paused) {
+            if (player.getState() != Player.IDLE_STATE) {
+                score += GameThread.TPF / 10;
+                map.update(player);
+
+                if (player.getTop() > GameView.HEIGHT && map.isStable()) {
+                    end();
+                }
+            } else {
+                if (Math.abs(textShift) >= Berry.SCALED_MAX_SHIFT) {
+                    textVel *= -1;
+                }
+                textShift += textVel;
+            }
+            player.update();
         }
     }
 
@@ -43,51 +75,75 @@ public class GameState {
         drawUI(canvas);
     }
 
-    void input(float tx, float ty) {
+    void tap(float tx, float ty) {
         if (STATE_BUTTON.click(tx, ty)) {
-            if (state == GAME_STATE
-                    && player.getState() != Player.IDLE_STATE) {
-                MainActivity.PAUSED = !MainActivity.PAUSED;
-                if (MainActivity.PAUSED) {
-                    STATE_BUTTON.setState(Button.PLAY);
-                } else {
-                    STATE_BUTTON.setState(Button.PAUSE);
-                }
+            if (state == GAME_STATE && player.getState() != Player.IDLE_STATE) {
+                togglePause();
             } else if (state == END_STATE) {
                 reset();
             }
         } else if (player.getState() == Player.IDLE_STATE) {
             player.run();
-        } else if (!MainActivity.PAUSED) {
+            AudioPlayer.start();
+        } else if (!paused) {
             player.jump();
         }
     }
 
-    private void drawUI(Canvas canvas) {
-        canvas.drawText(getTime(time), GameView.WIDTH / 2, 20 * GameView.SCALE_Y,
-                Resources.getPaint(10, true));
-
-        if (player.getState() == Player.IDLE_STATE) {
-            canvas.drawText("TAP TO START", GameView.WIDTH / 2, GameView.HEIGHT / 2,
-                    Resources.getPaint(10, true));
+    void swipe(float tx1, float ty1, float tx2, float ty2, float velX, float velY) {
+        if (player.getState() == Player.GRAB_STATE
+                && Math.abs(tx1 - tx2) <= 100 && velY > 0) {
+            player.drop(true);
         }
+    }
+
+    private void drawUI(Canvas canvas) {
+        drawText(canvas, (int) score + "", GameView.WIDTH / 2,
+                20 * GameView.SCALE_Y, true);
+
+        canvas.drawBitmap(Resources.ITEMS[0], 10 * GameView.SCALE_X,
+                10 * GameView.SCALE_Y, null);
+        drawText(canvas, berries + "", (Berry.WIDTH + 20) * GameView.SCALE_X,
+                20 * GameView.SCALE_Y, false);
 
         if (player.getState() == Player.IDLE_STATE || state == END_STATE) {
-            canvas.drawText("BEST: " + getTime(MainActivity.MAX_TIME), 10 * GameView.SCALE_X,
-                    20 * GameView.SCALE_Y, Resources.getPaint(10, false));
+            drawText(canvas, "BEST: " + (int) highScore, 10 * GameView.SCALE_X,
+                    GameView.HEIGHT - 10 * GameView.SCALE_Y, false);
         }
 
-        if (MainActivity.PAUSED) {
-            canvas.drawText("PAUSED", GameView.WIDTH / 2, GameView.HEIGHT / 2,
-                    Resources.getPaint(10, true));
+        if (player.getState() == Player.IDLE_STATE) {
+            drawText(canvas, "TAP TO START", GameView.WIDTH / 2,
+                    GameView.HEIGHT / 2f + textShift, true);
+        }
+
+        if (paused) {
+            drawText(canvas, "PAUSED", GameView.WIDTH / 2, GameView.HEIGHT / 2,
+                    true);
         }
 
         if (state == END_STATE) {
-            canvas.drawText("GAME OVER", GameView.WIDTH / 2, GameView.HEIGHT / 2,
-                    Resources.getPaint(10, true));
+            drawText(canvas, "GAME OVER", GameView.WIDTH / 2, GameView.HEIGHT / 2,
+                    true);
         }
         STATE_BUTTON.draw(canvas);
         HELP_BUTTON.draw(canvas);
+    }
+
+    private void drawText(Canvas canvas, String text, float x, float y, boolean center) {
+        if (center) {
+            canvas.drawText(text, x, y, Resources.FILL_CENTER_PAINT);
+            canvas.drawText(text, x, y, Resources.STROKE_CENTER_PAINT);
+        } else {
+            canvas.drawText(text, x, y, Resources.FILL_PAINT);
+            canvas.drawText(text, x, y, Resources.STROKE_PAINT);
+        }
+    }
+
+    private void end() {
+        state = END_STATE;
+        STATE_BUTTON.setState(Button.RESET);
+        AudioPlayer.reset();
+        save();
     }
 
     private void reset() {
@@ -95,23 +151,32 @@ public class GameState {
         STATE_BUTTON.setState(Button.PAUSE);
         HELP_BUTTON.setState(Button.HELP);
 
-        map = new Map();
-        player = new Player();
-        time = 0;
+        map = new Map(this);
+        player = new Player(this);
+
+        score = 0;
+        berries = 0;
+
+        textShift = 0;
+        textVel = Berry.VELY;
     }
 
-    private String getTime(double time) {
-        int minutes = (int) (time / 60000);
-        int seconds = (int) (time / 1000) % 60;
-        String minutesText = minutes + "";
-        String secondsText = seconds + "";
-        if (seconds < 10) {
-            secondsText = "0" + secondsText;
+    private void save() {
+        if (score > highScore) {
+            highScore = score;
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putInt("HIGH_SCORE", (int) highScore);
+            editor.apply();
         }
-        return minutesText + ":" + secondsText;
     }
 
-    public static Map getMap() {
+    void collectBerry() {
+        berries++;
+        score += 100;
+        AudioPlayer.playSound(AudioPlayer.BERRY, 0.05f);
+    }
+
+    public Map getMap() {
         return map;
     }
 }

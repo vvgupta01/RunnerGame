@@ -58,8 +58,8 @@ public class GameThread extends Thread {
             timer += System.currentTimeMillis() - startTime;
             frames++;
             if (timer >= 1000) {
-                Log.i("FPS", frames + "");
-                DELTA = Math.max(30f / frames, 1);
+//                Log.i("FPS", frames + "");
+                DELTA = 30f / frames;
                 frames = 0;
                 timer = 0;
             }

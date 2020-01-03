@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name">Jungle Run</string>
-    <string name="start">TAP TO START</string>
-    <string name="pause">PAUSED</string>
 </resources>
